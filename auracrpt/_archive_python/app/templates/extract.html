@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Extract Message - AuraCrypt{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="section-title">
+            <i class="fas fa-download"></i> Extract Secret Messages
+        </h1>
+        <p class="text-muted">Decrypt and extract hidden messages from audio files sent to you.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        {% if messages %}
+            <div class="row" id="messagesContainer">
+                {% for message in messages %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-envelope"></i> {{ message.title }}
+                                </h6>
+                                {% if message.is_extracted %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Extracted
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-lock"></i> Pending
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-2">
+                                    <strong>From:</strong> {{ message.sender.username }}
+                                </p>
+                                {% if message.description %}
+                                    <p class="text-muted small mb-3">{{ message.description }}</p>
+                                {% endif %}
+                                
+                                <div class="alert alert-info small mb-3">
+                                    <i class="fas fa-info-circle"></i>
+                                    Encrypted message size: {{ message.message_size }} bytes
+                                </div>
+                                
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-calendar"></i> 
+                                    Received: {{ message.created_at.strftime('%B %d, %Y at %H:%M') }}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <button class="btn btn-primary btn-sm w-100" onclick="extractMessage('{{ message.id }}')">
+                                    <i class="fas fa-lock-open"></i> Extract & Decrypt
+                                </button>
+                                <a href="{{ url_for('main.view_message', message_id=message.id) }}" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <a href="{{ url_for('api.api_download_audio', message_id=message.id) }}" class="btn btn-outline-info btn-sm w-100 mt-2">
+                                    <i class="fas fa-download"></i> Download Audio
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-inbox"></i>
+                <strong>No messages yet!</strong> You haven't received any encrypted messages. Check back later or ask others to send you secret messages.
+            </div>
+            
+            <!-- Info Cards -->
+            <div class="row mt-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-question-circle" style="color: #6366f1;"></i> What's a Secret Message?
+                            </h5>
+                            <p class="card-text text-muted">
+                                A secret message is a confidential text encrypted with your public RSA key and hidden inside a WAV audio file.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-share-alt" style="color: #8b5cf6;"></i> How to Receive?
+                            </h5>
+                            <p class="card-text text-muted">
+                                Share your public key with others from your profile page. They can then use it to send you encrypted messages.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-lock-open"></i> Extraction Process</h6>
+            </div>
+            <div class="card-body text-small">
+                <ol class="ps-3 mb-0">
+                    <li>Select a message to extract</li>
+                    <li>Click "Extract & Decrypt"</li>
+                    <li>System verifies audio integrity</li>
+                    <li>Retrieves encrypted message</li>
+                    <li>Decrypts using your private key</li>
+                    <li>Displays decrypted message</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-key"></i> Your Public Key</h6>
+            </div>
+            <div class="card-body text-small">
+                <p class="text-muted">Share this with others so they can send you encrypted messages:</p>
+                <a href="{{ url_for('main.profile') }}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="fas fa-share-alt"></i> View Public Key
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-shield-alt"></i> Security Features</h6>
+            </div>
+            <div class="card-body text-small">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> Audio integrity verification</li>
+                    <li><i class="fas fa-check text-success"></i> RSA 2048-bit decryption</li>
+                    <li><i class="fas fa-check text-success"></i> Undetectable extraction</li>
+                    <li><i class="fas fa-check text-success"></i> Full audit trail</li>
+                    <li><i class="fas fa-check text-success"></i> Access logging</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Extraction Modal -->
+<div class="modal fade" id="extractionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-lock-open"></i> Extracted Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="extractionContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="copyExtractedMessage()">
+                    <i class="fas fa-copy"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function extractMessage(messageId) {
+        try {
+            const response = await fetch(`/api/extract-message/${messageId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                displayExtractedMessage(data);
+                const modal = new bootstrap.Modal(document.getElementById('extractionModal'));
+                modal.show();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    function displayExtractedMessage(data) {
+        const content = document.getElementById('extractionContent');
+        content.innerHTML = `
+            <div class="alert alert-success mb-3">
+                <i class="fas fa-check-circle"></i> Message extracted and decrypted successfully!
+            </div>
+            <div>
+                <h6 class="text-muted mb-2">Decrypted Message:</h6>
+                <textarea class="form-control" rows="6" id="extractedMessage" readonly>${data.message}</textarea>
+            </div>
+            <small class="text-muted d-block mt-3">
+                Encrypted hex preview: ${data.encrypted_hex}
+            </small>
+        `;
+    }
+    
+    function copyExtractedMessage() {
+        const textarea = document.getElementById('extractedMessage');
+        textarea.select();
+        document.execCommand('copy');
+        alert('Message copied to clipboard!');
+    }
+</script>
+{% endblock %}

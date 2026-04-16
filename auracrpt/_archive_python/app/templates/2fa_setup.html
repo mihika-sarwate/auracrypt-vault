@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}2FA Setup - AuraCrypt{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h1 class="section-title">Setup Two-Factor Authentication</h1>
+                <p class="text-muted mb-4">Enhance your account security with 2FA using Google Authenticator or similar apps.</p>
+                
+                <div class="mb-4">
+                    <img src="{{ setup_data.qr_code }}" alt="QR Code" class="img-fluid border p-2 bg-white" style="max-width: 250px;">
+                </div>
+                
+                <div class="alert alert-warning text-start">
+                    <strong>Manual Entry Secret:</strong> <code>{{ setup_data.secret }}</code>
+                    <br><small>Use this if you cannot scan the QR code.</small>
+                </div>
+
+                <form action="{{ url_for('main.enable_2fa') }}" method="POST" class="mt-4">
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Enter 6-digit Verification Token</label>
+                        <input type="text" name="token" class="form-control text-center" style="font-size: 1.5rem; letter-spacing: 0.5rem;" maxlength="6" required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        Verify and Enable 2FA
+                    </button>
+                    <a href="{{ url_for('main.profile') }}" class="btn btn-link mt-2 text-secondary">Cancel Setup</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

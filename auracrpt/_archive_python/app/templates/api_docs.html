@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation - AuraCrypt{% endblock %}
+
+{% block content %}
+<h1 class="section-title">REST API Documentation</h1>
+<p class="lead">Integrate AuraCrypt steganography services into your own applications.</p>
+
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i> All API requests must include an <code>X-API-Key</code> header with a valid API key.
+</div>
+
+<div class="accordion" id="apiAccordion">
+    <!-- Authentication Section -->
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAuth">
+                <span class="badge bg-primary me-2">POST</span> /api/embed-message
+            </button>
+        </h2>
+        <div id="collapseAuth" class="accordion-collapse collapse show" data-bs-parent="#apiAccordion">
+            <div class="accordion-body">
+                <h6>Description</h6>
+                <p>Embed an encrypted message into a WAV audio file.</p>
+                
+                <h6>Form Parameters</h6>
+                <ul>
+                    <li><code>file</code>: WAV audio file (multipart/form-data)</li>
+                    <li><code>message</code>: The secret text to embed</li>
+                    <li><code>recipient_id</code>: Target user ID</li>
+                    <li><code>title</code>: Optional message title</li>
+                </ul>
+                
+                <h6>Response (201 Created)</h6>
+                <pre class="bg-light p-3 rounded"><code>{
+  "success": true,
+  "message_id": "uuid-v4",
+  "message": "Message embedded successfully"
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extraction Section -->
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExtract">
+                <span class="badge bg-primary me-2">POST</span> /api/extract-message/&lt;id&gt;
+            </button>
+        </h2>
+        <div id="collapseExtract" class="accordion-collapse collapse" data-bs-parent="#apiAccordion">
+            <div class="accordion-body">
+                <h6>Description</h6>
+                <p>Extract and decrypt a message from an audio file.</p>
+                
+                <h6>Response (200 OK)</h6>
+                <pre class="bg-light p-3 rounded"><code>{
+  "success": true,
+  "message": "Decrypted secret text",
+  "sender": "alice"
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

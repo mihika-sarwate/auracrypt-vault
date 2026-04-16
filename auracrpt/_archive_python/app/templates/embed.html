@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Embed Message - AuraCrypt{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="section-title">
+            <i class="fas fa-upload"></i> Embed Secret Message
+        </h1>
+        <p class="text-muted">Hide your encrypted message inside a WAV audio file using LSB steganography.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form id="embedForm" enctype="multipart/form-data">
+                    <!-- File Upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Select Audio File (WAV)</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <p class="mb-2"><strong>Click to upload or drag & drop</strong></p>
+                            <p class="text-muted small">WAV files only (max 50MB)</p>
+                            <input type="file" id="audioFile" name="file" accept=".wav" hidden>
+                        </div>
+                        <small class="text-muted d-block mt-2" id="fileInfo"></small>
+                    </div>
+                    
+                    <!-- Recipient Selection -->
+                    <div class="mb-4">
+                        <label for="recipient" class="form-label fw-bold">2. Select Recipient</label>
+                        <select class="form-select form-select-lg" id="recipient" name="recipient_id" required>
+                            <option value="">-- Choose a recipient --</option>
+                            {% for user in recipients %}
+                                <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Only receivers with active accounts are shown</small>
+                    </div>
+                    
+                    <!-- Message Title -->
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-bold">3. Message Title</label>
+                        <input type="text" class="form-control form-control-lg" id="title" name="title" 
+                               placeholder="e.g., Confidential Report" required maxlength="255">
+                        <small class="text-muted">Visible to recipient</small>
+                    </div>
+                    
+                    <!-- Message Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-bold">4. Message Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="2" placeholder="Optional: Add context about this message" maxlength="500"></textarea>
+                        <small class="text-muted">Optional, visible to recipient</small>
+                    </div>
+                    
+                    <!-- Secret Message -->
+                    <div class="mb-4">
+                        <label for="message" class="form-label fw-bold">5. Secret Message</label>
+                        <div class="position-relative">
+                            <textarea class="form-control" id="message" name="message" 
+                                      rows="6" placeholder="Type your secret message here..." required maxlength="102400"></textarea>
+                            <small class="text-muted d-block mt-2">
+                                <span id="charCount">0</span> / 102400 characters
+                            </small>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> Your message will be encrypted with RSA 2048-bit before embedding
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Capacity Information -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Capacity Info:</strong> The audio file's capacity will be calculated after you select a file.
+                        <span id="capacityInfo" class="d-block mt-2"></span>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-shield-alt"></i> Embed & Encrypt Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-key"></i> How It Works</h6>
+            </div>
+            <div class="card-body text-small">
+                <ol class="ps-3 mb-0">
+                    <li>Write your secret message</li>
+                    <li>Select a WAV audio file</li>
+                    <li>Choose the recipient</li>
+                    <li>System encrypts the message with recipient's RSA public key</li>
+                    <li>Encrypted data is hidden using LSB steganography</li>
+                    <li>Modified audio file is saved</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-shield-alt"></i> Security</h6>
+            </div>
+            <div class="card-body text-small">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> RSA 2048-bit encryption</li>
+                    <li><i class="fas fa-check text-success"></i> OAEP padding with SHA-256</li>
+                    <li><i class="fas fa-check text-success"></i> LSB steganography (undetectable)</li>
+                    <li><i class="fas fa-check text-success"></i> SHA-256 file integrity</li>
+                    <li><i class="fas fa-check text-success"></i> Full audit logging</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-file-audio"></i> Requirements</h6>
+            </div>
+            <div class="card-body text-small">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-circle-check text-warning"></i> WAV format only</li>
+                    <li><i class="fas fa-circle-check text-warning"></i> PCM audio</li>
+                    <li><i class="fas fa-circle-check text-warning"></i> Mono or Stereo</li>
+                    <li><i class="fas fa-circle-check text-warning"></i> Max 50MB</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('embedForm');
+    const audioFile = document.getElementById('audioFile');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInfo = document.getElementById('fileInfo');
+    const messageTextarea = document.getElementById('message');
+    const charCount = document.getElementById('charCount');
+    
+    // File upload handling
+    fileUploadArea.addEventListener('click', () => audioFile.click());
+    
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('drag-over');
+    });
+    
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            audioFile.files = files;
+            handleFileSelect();
+        }
+    });
+    
+    audioFile.addEventListener('change', handleFileSelect);
+    
+    function handleFileSelect() {
+        const file = audioFile.files[0];
+        if (!file) return;
+        
+        if (!file.name.toLowerCase().endsWith('.wav')) {
+            fileInfo.textContent = 'Error: Please select a WAV file';
+            fileInfo.className = 'text-danger';
+            return;
+        }
+        
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        fileInfo.textContent = `Selected: ${file.name} (${sizeMB} MB)`;
+        fileInfo.className = 'text-success';
+        document.getElementById('capacityInfo').textContent = `File size: ${sizeMB} MB - This will be analyzed on submission`;
+    }
+    
+    // Character counter
+    messageTextarea.addEventListener('input', () => {
+        charCount.textContent = messageTextarea.value.length;
+    });
+    
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!audioFile.files[0]) {
+            alert('Please select an audio file');
+            return;
+        }
+        
+        if (!form.recipient_id.value) {
+            alert('Please select a recipient');
+            return;
+        }
+        
+        if (!form.message.value.trim()) {
+            alert('Please enter a message');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/api/embed-message', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('Message embedded successfully!');
+                window.location.href = '/dashboard';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}

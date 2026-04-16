@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Message - AuraCrypt{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="section-title">
+            <i class="fas fa-envelope-open"></i> Message Details
+        </h1>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{{ message.title }}</h5>
+            </div>
+            <div class="card-body">
+                <!-- Message Metadata -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="text-muted d-block mb-1">Sender</label>
+                        <h6 class="mb-0">{{ message.sender.username }}</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted d-block mb-1">Recipient</label>
+                        <h6 class="mb-0">{{ message.recipient.username }}</h6>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="text-muted d-block mb-1">Created</label>
+                        <h6 class="mb-0">{{ message.created_at.strftime('%B %d, %Y at %H:%M:%S') }}</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted d-block mb-1">Status</label>
+                        <h6 class="mb-0">
+                            {% if message.is_extracted %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Extracted</span>
+                            {% else %}
+                                <span class="badge bg-warning"><i class="fas fa-lock"></i> Pending</span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                </div>
+                
+                {% if message.description %}
+                    <hr>
+                    <div class="mb-4">
+                        <label class="text-muted d-block mb-2">Description</label>
+                        <p class="mb-0">{{ message.description }}</p>
+                    </div>
+                {% endif %}
+                
+                <hr>
+                
+                <!-- Audio File Information -->
+                <h6 class="mb-3"><i class="fas fa-file-audio"></i> Audio File Details</h6>
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="text-muted"><strong>Filename</strong></td>
+                            <td><code>{{ message.audio_file_name }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>File Size</strong></td>
+                            <td>{{ (message.audio_file_size / 1024)|int }} KB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>SHA-256 Hash</strong></td>
+                            <td><small><code>{{ message.audio_file_hash }}</code></small></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Embedding Method</strong></td>
+                            <td>LSB Steganography</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Encrypted Message Size</strong></td>
+                            <td>{{ message.message_size }} bytes</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Actions -->
+                <div class="mb-4">
+                    <a href="{{ url_for('api.api_download_audio', message_id=message.id) }}" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Download Audio File
+                    </a>
+                    
+                    {% if message.recipient_id == current_user.id and not message.is_extracted %}
+                        <button class="btn btn-success" onclick="extractAndDecrypt('{{ message.id }}')">
+                            <i class="fas fa-lock-open"></i> Extract & Decrypt
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-shield-alt"></i> Security Info</h6>
+            </div>
+            <div class="card-body text-small">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success"></i> Message encrypted with RSA 2048-bit</li>
+                    <li><i class="fas fa-check text-success"></i> OAEP padding with SHA-256</li>
+                    <li><i class="fas fa-check text-success"></i> Hidden using LSB steganography</li>
+                    <li><i class="fas fa-check text-success"></i> File integrity verified with SHA-256</li>
+                    <li><i class="fas fa-check text-success"></i> All actions logged and audited</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> What's LSB?</h6>
+            </div>
+            <div class="card-body text-small">
+                <p class="text-muted mb-0">
+                    LSB (Least Significant Bit) steganography hides encrypted data in the least significant bits of audio samples. This is virtually undetectable without knowing the extraction method.
+                </p>
+            </div>
+        </div>
+        
+        {% if message.accessed_at %}
+            <div class="alert alert-info text-small">
+                <i class="fas fa-clock"></i>
+                <strong>Last Accessed:</strong><br>
+                {{ message.accessed_at.strftime('%B %d, %Y at %H:%M:%S') }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Extraction Modal -->
+<div class="modal fade" id="extractionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-lock-open"></i> Extracted Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="extractionContent" class="mb-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="copyExtractedMessage()">
+                    <i class="fas fa-copy"></i> Copy Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function extractAndDecrypt(messageId) {
+        try {
+            const response = await fetch(`/api/extract-message/${messageId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                const content = document.getElementById('extractionContent');
+                content.innerHTML = `
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-check-circle"></i> Message extracted and decrypted successfully!
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-2">Decrypted Message:</h6>
+                        <textarea class="form-control" rows="6" id="extractedMessage" readonly>${data.message}</textarea>
+                    </div>
+                    <small class="text-muted d-block mt-3">
+                        Encrypted data size: ${data.encrypted_hex.length / 2} bytes
+                    </small>
+                `;
+                
+                const modal = new bootstrap.Modal(document.getElementById('extractionModal'));
+                modal.show();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+    
+    function copyExtractedMessage() {
+        const textarea = document.getElementById('extractedMessage');
+        textarea.select();
+        document.execCommand('copy');
+        alert('Message copied to clipboard!');
+    }
+</script>
+{% endblock %}

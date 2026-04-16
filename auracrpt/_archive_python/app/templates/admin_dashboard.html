@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AuraCrypt{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Admin Dashboard</h1>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Total Users</h6>
+                        <h2 class="mb-0">{{ stats.total_users }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Total Messages</h6>
+                        <h2 class="mb-0">{{ stats.total_messages }}</h2>
+                    </div>
+                    <i class="fas fa-envelope fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Files Stored</h6>
+                        <h2 class="mb-0">{{ stats.total_files }}</h2>
+                    </div>
+                    <i class="fas fa-hdd fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Security Alerts</h6>
+                        <h2 class="mb-0">{{ stats.failed_logins_24h }}</h2>
+                    </div>
+                    <i class="fas fa-shield-alt fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">User Management</h5>
+                <button class="btn btn-sm btn-outline-primary">Add Admin</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Last Login</th>
+                                <th>Security</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.username }}</strong><br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ user.role }}</span></td>
+                                <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                                <td>
+                                    {% if user.is_2fa_enabled %}
+                                    <span class="badge bg-success">2FA</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No 2FA</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">System Activity</h5>
+            </div>
+            <div class="body p-3">
+                <div class="list-group list-group-flush">
+                    <!-- Logs would go here -->
+                    <div class="list-group-item px-0">
+                        <small class="text-primary d-block">Just now</small>
+                        User admin logged in
+                    </div>
+                    <div class="list-group-item px-0">
+                        <small class="text-primary d-block">5 mins ago</small>
+                        New file uploaded by alice
+                    </div>
+                </div>
+                <a href="#" class="btn btn-link w-100 mt-3">View All Logs</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
